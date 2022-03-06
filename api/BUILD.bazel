@@ -1,0 +1,101 @@
+# Set all target’s visibility in this package to "public".
+package(default_visibility = ["//visibility:public"])
+
+# Load rules_haskell rules.
+load(
+    "@rules_haskell//haskell:defs.bzl",
+    "haskell_toolchain_library",
+    "haskell_library",
+    "haskell_binary",
+)
+
+load(
+    "@//api:haskell.bzl",
+    "toolchain",
+)
+
+# haskell_toolchain_library can access builtin GHC packages
+# and assign them a bazel target name, so that they
+# can be referenced as dependencies.
+haskell_toolchain_library(name = "base")
+
+exts = [
+    "-XDataKinds",
+    "-XDefaultSignatures",
+    "-XDeriveAnyClass",
+    "-XDeriveGeneric",
+    "-XDerivingStrategies",
+    "-XDerivingVia",
+    "-XDuplicateRecordFields",
+    "-XFlexibleContexts",
+    "-XGADTs",
+    "-XGeneralizedNewtypeDeriving",
+    "-XKindSignatures",
+    "-XLambdaCase",
+    "-XNoImplicitPrelude",
+    "-XOverloadedLists",
+    "-XOverloadedStrings",
+    "-XRankNTypes",
+    "-XRecordWildCards",
+    "-XScopedTypeVariables",
+    "-XTypeApplications",
+    "-XTypeFamilies",
+    "-XTypeOperators",
+    "-Wall",
+    "-Wcompat",
+    "-Widentities",
+    "-Wincomplete-record-updates",
+    "-Wincomplete-uni-patterns",
+    "-Wmissing-deriving-strategies",
+    "-Wpartial-fields",
+    "-Wredundant-constraints",
+    "-Werror",
+]
+
+# You can add your own libraries with haskell_library.
+# haskell_library(
+#     name = "lib",
+#     src_strip_prefix = "src",
+#     srcs = glob(['src/**/*.hs']),
+#     deps = [
+#         "base_pkg"
+#     ],
+# )
+
+deps = [
+    "base",
+    "aeson",
+    # "bytestring",
+    # "openapi3",
+    # "http-types",
+    # "network-uri",
+    "warp",
+    "wai-extra",
+    "wai-cors",
+    "polysemy",
+    # "polysemy-plugin",
+    "servant",
+    # "servant-openapi3",
+    "servant-server",
+    "universum",
+]
+
+binary_exts = exts + [
+    "-threaded",
+    "-rtsopts",
+    "-with-rtsopts=-N",
+]
+
+toolchain(deps)
+
+haskell_binary(
+    name = "server",
+    srcs = [":app/Main.hs"],
+    deps = deps,
+    plugins = [],
+    # plugins = ["polysemy_plugin"],
+    compiler_flags = binary_exts,
+    visibility = [
+        "//visibility:public",
+    ],
+)

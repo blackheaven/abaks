@@ -1,0 +1,10 @@
+load(
+    # "@//bazel/hetchr:haskell.bzl",
+    "repl",
+)
+
+deps = [
+    "//api:server",
+]
+
+repl(deps)
