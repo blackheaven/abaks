@@ -1,0 +1,92 @@
+cabal-version:       3.0
+name:                abaks
+version:             0.1.0.0
+author:              Gautier DI FOLCO
+maintainer:          gautier.difolco@gmail.com
+category:            Data
+build-type:          Simple
+license:             ISC
+license-file:        LICENSE
+synopsis:            Bank reconciliation statements
+description:         Bank reconciliation statements.
+Homepage:            http://github.com/blackheaven/abaks
+
+library
+  default-language:   Haskell2010
+  build-depends:
+        base == 4.*
+  hs-source-dirs: src
+  exposed-modules:
+      Abaks.Entities
+  other-modules:
+      Paths_abaks
+  autogen-modules:
+      Paths_abaks
+  default-extensions:
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      GADTs
+      GeneralizedNewtypeDeriving
+      KindSignatures
+      LambdaCase
+      OverloadedRecordDot
+      OverloadedStrings
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base
+    , aeson
+    , containers
+    , text
+    , time
+  default-language: Haskell2010
+
+test-suite abaks-test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+  other-modules:
+      Abaks.EntitiesSpec
+      Paths_abaks
+  autogen-modules:
+      Paths_abaks
+  default-extensions:
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      GADTs
+      GeneralizedNewtypeDeriving
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base
+    , abaks
+    , hspec
+    , hspec-core
+    , hspec-discover
+    , text
+  default-language: Haskell2010
