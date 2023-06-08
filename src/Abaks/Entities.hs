@@ -14,6 +14,11 @@ module Abaks.Entities
     commentEntry,
     markInClonflictEntry,
     deleteEntry,
+
+    -- * Generic event sourcing
+    Events,
+    CommandHandler,
+    applyCommand,
   )
 where
 
@@ -136,15 +141,6 @@ inPeriod x =
         else Left "Out of period"
     _ -> Left "Period is not properly defined"
 
--- fetchEntry :: EntryId -> Events AbaksEvent -> Entry
--- fetchEntry x =
---   \case
---     (Started params:_) ->
---       if x >= from && x <= to$
---         then return ()
---         else Left "Out of period"
---     _ -> Left "Period is not properly defined"
-
 listEntries :: Events AbaksEvent -> Map.Map EntryId (Either () Entry)
 listEntries = foldl' go mempty
   where
@@ -167,21 +163,14 @@ validEntry entryId events = do
     Just (Left ()) -> Left "Deleted entry"
     Just (Right _) -> Right ()
 
--- listEntries :: Events AbaksEvent -> Map.Map EntryId (Either () Entry)
--- listEntries = foldl' go mempty
---   where go :: Map.Map EntryId (Either () Entry) -> AbaksEvent -> Map.Map EntryId (Either () Entry)
---         go entries =
---           \case
---             Started _ -> entries
---             EntryAdded x -> Map.insert x.entryId (Right x) entries
---             EntryAmountChanged x -> Map.adjust x.entryId (\e -> e { = }) entries
---             EntryValidated x -> Map.adjust x.entryId (\e -> e { = }) entries
---             EntryCommented x -> Map.adjust x.entryId (\e -> e { = })entries
---             EntryMarkedInConflict x -> Map.adjust x.entryId (\e -> e { = })entries
---             EntryDeleted x -> Map.insert x.entryId (Left ()) entries
-
 -- * Various utils
 
 type CommandHandler a e = Events a -> Either e (Events a)
 
 type Events a = [a]
+
+applyCommand ::
+  CommandHandler a e ->
+  Events a ->
+  Either e (Events a)
+applyCommand = ($)
