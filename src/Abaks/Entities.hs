@@ -7,6 +7,9 @@ module Abaks.Entities
     EntryId (..),
     Amount (..),
     EntryState (..),
+
+    -- * CommandHandlers
+    ExplainedError (..),
     startPeriod,
     addEntry,
     changeAmountEntry,
