@@ -89,4 +89,5 @@ test-suite abaks-test
     , hspec-core
     , hspec-discover
     , text
+    , time
   default-language: Haskell2010
