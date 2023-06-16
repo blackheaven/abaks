@@ -74,6 +74,7 @@ test-suite abaks-test
       GeneralizedNewtypeDeriving
       KindSignatures
       LambdaCase
+      OverloadedRecordDot
       OverloadedStrings
       RankNTypes
       RecordWildCards
