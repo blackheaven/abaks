@@ -5,6 +5,7 @@ module Abaks.EntitiesSpec
 where
 
 import Abaks.Entities
+import Abaks.EventSourcing
 import Data.Either
 import Data.Functor.Classes
 import Data.List (foldl')
@@ -93,7 +94,7 @@ applyCommands = snd . foldl' go (mempty, mempty)
        in (either (const events) (events <>) result, previousResults <> [result])
 
 anyPeriodId :: PeriodId
-anyPeriodId = PeriodId 0
+anyPeriodId = PeriodId $ AggregateId "42"
 
 periodName :: Text
 periodName = "Jan 2023"

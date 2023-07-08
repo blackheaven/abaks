@@ -17,14 +17,10 @@ module Abaks.Entities
     commentEntry,
     markInClonflictEntry,
     deleteEntry,
-
-    -- * Generic event sourcing
-    Events,
-    CommandHandler,
-    applyCommand,
   )
 where
 
+import Abaks.EventSourcing
 import Control.Monad (unless)
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
@@ -35,7 +31,7 @@ import GHC.Generics (Generic)
 
 -- * Base types
 
-newtype PeriodId = PeriodId {getPeriodId :: Int}
+newtype PeriodId = PeriodId {getPeriodId :: AggregateId}
   deriving stock (Eq, Ord, Show, Generic)
 
 data Entry = Entry
@@ -165,15 +161,3 @@ validEntry entryId events = do
     Nothing -> Left "Unknown entry"
     Just (Left ()) -> Left "Deleted entry"
     Just (Right _) -> Right ()
-
--- * Various utils
-
-type CommandHandler a e = Events a -> Either e (Events a)
-
-type Events a = [a]
-
-applyCommand ::
-  CommandHandler a e ->
-  Events a ->
-  Either e (Events a)
-applyCommand = ($)

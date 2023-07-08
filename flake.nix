@@ -4,25 +4,26 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
+    polysemy.url = github:polysemy-research/polysemy/16999eece5b10bc7c9cb8610be785f946e0140be;
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
     # flake-utils.lib.eachDefaultSystem
     flake-utils.lib.eachSystem [ flake-utils.lib.system.x86_64-linux ]
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
-          github = owner: repo: rev: sha256:
-            builtins.fetchTarball { inherit sha256; url = "https://github.com/${owner}/${repo}/archive/${rev}.tar.gz"; };
-
-          sources = { };
-
           jailbreakUnbreak = pkg:
             pkgs.haskell.lib.doJailbreak (pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.unmarkBroken pkg));
 
           haskellPackages = pkgs.haskell.packages.ghc925.override {
-            overrides = hself: hsuper: { };
+            overrides = hself: hsuper: {
+              type-errors = jailbreakUnbreak hsuper.type-errors;
+              ListLike = jailbreakUnbreak hsuper.ListLike;
+              polysemy = hsuper.callCabal2nix "polysemy" inputs.polysemy { };
+              polysemy-plugin = hsuper.callCabal2nix "polysemy-plugin" "${inputs.polysemy}/polysemy-plugin" { };
+            };
           };
           assets = builtins.filterSource (path: type: pkgs.lib.strings.hasInfix "assets" path) ./.;
         in

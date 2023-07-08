@@ -13,11 +13,11 @@ Homepage:            http://github.com/blackheaven/abaks
 
 library
   default-language:   Haskell2010
-  build-depends:
-        base == 4.*
   hs-source-dirs: src
   exposed-modules:
       Abaks.Entities
+      Abaks.EventSourcing
+      Abaks.UseCases
   other-modules:
       Paths_abaks
   autogen-modules:
@@ -48,8 +48,11 @@ library
       base
     , aeson
     , containers
+    , polysemy
+    , polysemy-plugin
     , text
     , time
+    , uuid
   default-language: Haskell2010
 
 test-suite abaks-test
