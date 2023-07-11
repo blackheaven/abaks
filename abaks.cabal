@@ -61,6 +61,7 @@ test-suite abaks-test
   main-is: Spec.hs
   other-modules:
       Abaks.EntitiesSpec
+      Abaks.UseCasesSpec
       Paths_abaks
   autogen-modules:
       Paths_abaks
@@ -92,6 +93,8 @@ test-suite abaks-test
     , hspec
     , hspec-core
     , hspec-discover
+    , polysemy
+    , polysemy-plugin
     , text
     , time
   default-language: Haskell2010
