@@ -15,7 +15,7 @@ module Abaks.Entities
     changeAmountEntry,
     validateEntry,
     commentEntry,
-    markInClonflictEntry,
+    markInConflictEntry,
     deleteEntry,
   )
 where
@@ -109,8 +109,8 @@ commentEntry entryId comment events = do
   validEntry entryId events
   return [EntryCommented entryId comment]
 
-markInClonflictEntry :: EntryId -> Text -> CommandHandler AbaksEvent ExplainedError
-markInClonflictEntry entryId reason events = do
+markInConflictEntry :: EntryId -> Text -> CommandHandler AbaksEvent ExplainedError
+markInConflictEntry entryId reason events = do
   validEntry entryId events
   return [EntryMarkedInConflict entryId reason]
 

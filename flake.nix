@@ -19,10 +19,11 @@
 
           haskellPackages = pkgs.haskell.packages.ghc925.override {
             overrides = hself: hsuper: {
-              type-errors = jailbreakUnbreak hsuper.type-errors;
               ListLike = jailbreakUnbreak hsuper.ListLike;
+              openapi3 = jailbreakUnbreak hsuper.openapi3;
               polysemy = hsuper.callCabal2nix "polysemy" inputs.polysemy { };
               polysemy-plugin = hsuper.callCabal2nix "polysemy-plugin" "${inputs.polysemy}/polysemy-plugin" { };
+              type-errors = jailbreakUnbreak hsuper.type-errors;
             };
           };
           assets = builtins.filterSource (path: type: pkgs.lib.strings.hasInfix "assets" path) ./.;

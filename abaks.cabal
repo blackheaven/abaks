@@ -17,6 +17,7 @@ library
   exposed-modules:
       Abaks.Entities
       Abaks.EventSourcing
+      Abaks.InterfaceAdapters
       Abaks.UseCases
   other-modules:
       Paths_abaks
@@ -47,9 +48,16 @@ library
   build-depends:
       base
     , aeson
+    , casing
     , containers
+    , microlens
+    , openapi3
     , polysemy
     , polysemy-plugin
+    , servant
+    , servant-client
+    , servant-openapi3
+    , servant-server
     , text
     , time
     , uuid

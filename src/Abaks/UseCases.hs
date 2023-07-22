@@ -4,7 +4,7 @@ module Abaks.UseCases
     changeAmountEntry,
     validateEntry,
     commentEntry,
-    markInClonflictEntry,
+    markInConflictEntry,
     deleteEntry,
   )
 where
@@ -25,9 +25,9 @@ createPeriod ::
   Day ->
   Entities.Amount ->
   Sem r (Either Text Entities.PeriodId)
-createPeriod name from to balance = do
+createPeriod name from to initialBalance = do
   periodId <- Entities.PeriodId . AggregateId . UUID.toText <$> embedFinal UUID.nextRandom
-  runCommand (Entities.startPeriod periodId name from to balance) periodId.getPeriodId $
+  runCommand (Entities.startPeriod periodId name from to initialBalance) periodId.getPeriodId $
     return . bimap (.getExplainedError) (const periodId)
 
 addEntry ::
@@ -68,14 +68,14 @@ commentEntry periodId entryId comment =
   runCommand (Entities.commentEntry entryId comment) periodId.getPeriodId $
     return . bimap (.getExplainedError) (const ())
 
-markInClonflictEntry ::
+markInConflictEntry ::
   Members '[EventSourceEffect Entities.AbaksEvent] r =>
   Entities.PeriodId ->
   Entities.EntryId ->
   Text ->
   Sem r (Either Text ())
-markInClonflictEntry periodId entryId reason =
-  runCommand (Entities.markInClonflictEntry entryId reason) periodId.getPeriodId $
+markInConflictEntry periodId entryId reason =
+  runCommand (Entities.markInConflictEntry entryId reason) periodId.getPeriodId $
     return . bimap (.getExplainedError) (const ())
 
 deleteEntry ::
