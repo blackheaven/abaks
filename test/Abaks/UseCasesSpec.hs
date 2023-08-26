@@ -4,9 +4,10 @@ module Abaks.UseCasesSpec
   )
 where
 
-import Abaks.Entities (AbaksEvent, Amount (..), Entry (..), EntryId (..), EntryState (..))
-import Abaks.EventSourcing
+import Abaks.Entities (AbaksEvent, Amount (..), Entry (..), EntryId (..), EntryState (..), SemanticError)
 import Abaks.UseCases
+import Abaks.Utils.EventSourcing
+import Abaks.Utils.Random
 import Data.Text (Text)
 import Data.Time.Calendar
 import Polysemy
@@ -23,13 +24,13 @@ spec = do
       it "All chained commands should work" $ \fixture ->
         runUsecase
           fixture
-          ( runError @Text $ do
+          ( runError @SemanticError $ do
               periodId <- createPeriod periodName periodStart periodEnd (Amount 0) >>= fromEither
               addEntry periodId anEntry >>= fromEither
               changeAmountEntry periodId anEntry.entryId (Amount 1500) >>= fromEither
               validateEntry periodId anEntry.entryId >>= fromEither
               commentEntry periodId anEntry.entryId "The Hateful 8: too cool" >>= fromEither
-              markInClonflictEntry periodId anEntry.entryId "way too expensive" >>= fromEither
+              markInConflictEntry periodId anEntry.entryId "way too expensive" >>= fromEither
               deleteEntry periodId anEntry.entryId "wrong period" >>= fromEither
           )
           `shouldReturn` Right ()
@@ -55,8 +56,8 @@ anEntry =
     }
 
 newtype Fixture = Fixture
-  { runUsecase :: forall a. Sem '[EventSourceEffect AbaksEvent, Final IO] a -> IO a
+  { runUsecase :: forall a. Sem '[EventSourceEffect AbaksEvent, Random, Final IO] a -> IO a
   }
 
 withFixture :: ActionWith Fixture -> IO ()
-withFixture action = action $ Fixture $ runFinal . runMemoryUnsafe
+withFixture action = action $ Fixture $ runFinal . runRandom . runMemoryUnsafe

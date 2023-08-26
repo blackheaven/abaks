@@ -5,7 +5,7 @@ module Abaks.EntitiesSpec
 where
 
 import Abaks.Entities
-import Abaks.EventSourcing
+import Abaks.Utils.EventSourcing
 import Data.Either
 import Data.Functor.Classes
 import Data.List (foldl')
@@ -28,7 +28,7 @@ spec = do
           changeAmountEntry anEntry.entryId (Amount 1500),
           validateEntry anEntry.entryId,
           commentEntry anEntry.entryId "The Hateful 8: too cool",
-          markInClonflictEntry anEntry.entryId "way too expensive",
+          markInConflictEntry anEntry.entryId "way too expensive",
           deleteEntry anEntry.entryId "wrong period"
         ]
         `shouldSatisfy` liftEq ($) [isLeft, isLeft, isLeft, isLeft, isLeft, isLeft]
@@ -46,7 +46,7 @@ spec = do
           changeAmountEntry anEntry.entryId (Amount 1500),
           validateEntry anEntry.entryId,
           commentEntry anEntry.entryId "The Hateful 8: too cool",
-          markInClonflictEntry anEntry.entryId "way too expensive",
+          markInConflictEntry anEntry.entryId "way too expensive",
           deleteEntry anEntry.entryId "wrong period"
         ]
         `shouldSatisfy` liftEq ($) [isRight, isRight, isRight, isRight, isRight, isRight, isRight]
@@ -57,7 +57,7 @@ spec = do
           changeAmountEntry anEntry.entryId (Amount 1500),
           validateEntry anEntry.entryId,
           commentEntry anEntry.entryId "The Hateful 8: too cool",
-          markInClonflictEntry anEntry.entryId "way too expensive",
+          markInConflictEntry anEntry.entryId "way too expensive",
           deleteEntry anEntry.entryId "wrong period"
         ]
         `shouldSatisfy` liftEq ($) [isRight, isRight, isLeft, isLeft, isLeft, isLeft, isLeft]
@@ -67,7 +67,7 @@ spec = do
           changeAmountEntry anEntry.entryId (Amount 1500),
           validateEntry anEntry.entryId,
           commentEntry anEntry.entryId "The Hateful 8: too cool",
-          markInClonflictEntry anEntry.entryId "way too expensive",
+          markInConflictEntry anEntry.entryId "way too expensive",
           deleteEntry anEntry.entryId "wrong period"
         ]
         `shouldSatisfy` liftEq ($) [isRight, isLeft, isLeft, isLeft, isLeft, isLeft]
@@ -79,14 +79,14 @@ spec = do
           changeAmountEntry anEntry.entryId (Amount 1500),
           validateEntry anEntry.entryId,
           commentEntry anEntry.entryId "The Hateful 8: too cool",
-          markInClonflictEntry anEntry.entryId "way too expensive",
+          markInConflictEntry anEntry.entryId "way too expensive",
           deleteEntry anEntry.entryId "wrong period"
         ]
         `shouldSatisfy` liftEq ($) [isRight, isRight, isRight, isLeft, isLeft, isLeft, isLeft, isLeft]
 
 applyCommands ::
-  [CommandHandler AbaksEvent ExplainedError] ->
-  [Either ExplainedError (Events AbaksEvent)]
+  [CommandHandler AbaksEvent SemanticError] ->
+  [Either SemanticError (Events AbaksEvent)]
 applyCommands = snd . foldl' go (mempty, mempty)
   where
     go (events, previousResults) handler =
@@ -116,5 +116,5 @@ anEntry =
       date = fromGregorian 2023 1 24
     }
 
-startingCommand :: CommandHandler AbaksEvent ExplainedError
+startingCommand :: CommandHandler AbaksEvent SemanticError
 startingCommand = startPeriod anyPeriodId periodName periodStart periodEnd (Amount 0)

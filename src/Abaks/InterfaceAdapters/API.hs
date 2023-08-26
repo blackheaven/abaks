@@ -1,34 +1,23 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
-module Abaks.InterfaceAdapters
+module Abaks.InterfaceAdapters.API
   ( API,
     server,
   )
 where
 
 import qualified Abaks.Entities as Entities
-import Abaks.EventSourcing
 import qualified Abaks.UseCases as UC
-import Data.Aeson
-import Data.Function ((&))
-import Data.OpenApi (allOperations, operationId)
-import Data.Proxy
+import Abaks.Utils.EventSourcing
+import Abaks.Utils.Random
+import Abaks.Utils.Servant
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import Data.Time.Calendar (Day)
 import GHC.Generics
-import GHC.TypeLits
-import Lens.Micro ((?~))
 import Polysemy
 import Polysemy.Error
 import Servant.API
-import Servant.Client (HasClient (..))
-import Servant.OpenApi (HasOpenApi (..))
 import Servant.Server
-import Text.Casing (fromHumps, toKebab)
 
 type API = NamedRoutes API'
 
@@ -43,7 +32,7 @@ data API' r = API
   }
   deriving stock (Generic)
 
-type ApiEffects = '[EventSourceEffect Entities.AbaksEvent, Final IO, Error ServerError]
+type ApiEffects = '[EventSourceEffect Entities.AbaksEvent, Random, Error ServerError]
 
 server :: Members ApiEffects r => ServerT API (Sem r)
 server =
@@ -258,24 +247,7 @@ data EntryStateA
   | ValidatedA
   | InConflictA Text
   deriving stock (Eq, Show, Generic)
-
-entryStateAOptions :: Options
-entryStateAOptions =
-  defaultOptions
-    { constructorTagModifier = toKebab . fromHumps . init,
-      sumEncoding =
-        TaggedObject
-          { tagFieldName = "value",
-            contentsFieldName = "args"
-          }
-    }
-
-instance ToJSON EntryStateA where
-  toJSON = genericToJSON entryStateAOptions
-  toEncoding = genericToEncoding entryStateAOptions
-
-instance FromJSON EntryStateA where
-  parseJSON = genericParseJSON entryStateAOptions
+  deriving (FromJSON, ToJSON) via (DerivingAPISum EntryStateA)
 
 toEntryState :: EntryStateA -> Entities.EntryState
 toEntryState =
@@ -294,33 +266,24 @@ toEntryId = Entities.EntryId
 genericUseCaseHandler ::
   Members ApiEffects r =>
   (a -> b) ->
-  Sem r (Either Text a) ->
+  Sem r (Either Entities.SemanticError a) ->
   Sem r b
 genericUseCaseHandler onSuccess f = do
   r <- f
+  let withError e msg = e {errBody = TLE.encodeUtf8 $ TL.fromStrict msg}
   case r of
-    Left e -> throw err500 {errBody = TLE.encodeUtf8 $ TL.fromStrict e}
+    Left e ->
+      throw $
+        case e of
+          Entities.MissingError msg -> withError err404 msg
+          Entities.DisappearedError msg -> withError err410 msg
+          Entities.InvalidError msg -> withError err400 msg
+          Entities.BrokenInvariantError msg -> withError err500 msg
+          Entities.PreconditionError msg -> withError err412 msg
     Right s -> return $ onSuccess s
 
 genericUseCaseHandler_ ::
   Members ApiEffects r =>
-  Sem r (Either Text a) ->
+  Sem r (Either Entities.SemanticError a) ->
   Sem r NoContent
 genericUseCaseHandler_ = genericUseCaseHandler $ const NoContent
-
-data OperationId (name :: Symbol)
-
-instance HasServer subApi ctx => HasServer (OperationId name :> subApi) ctx where
-  type ServerT (OperationId name :> subApi) m = ServerT subApi m
-  route _ = route (Proxy @subApi)
-  hoistServerWithContext _ = hoistServerWithContext (Proxy @subApi)
-
-instance (HasOpenApi subApi, KnownSymbol name) => HasOpenApi (OperationId name :> subApi) where
-  toOpenApi _ = toOpenApi (Proxy @subApi) & allOperations . operationId ?~ apiName
-    where
-      apiName = T.pack $ symbolVal (Proxy @name)
-
-instance HasClient m api => HasClient m (OperationId name :> api) where
-  type Client m (OperationId name :> api) = Client m api
-  clientWithRoute pm Proxy = clientWithRoute pm (Proxy :: Proxy api)
-  hoistClientMonad pm _ = hoistClientMonad pm (Proxy :: Proxy api)

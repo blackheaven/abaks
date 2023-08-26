@@ -9,7 +9,7 @@ module Abaks.Entities
     EntryState (..),
 
     -- * CommandHandlers
-    ExplainedError (..),
+    SemanticError (..),
     startPeriod,
     addEntry,
     changeAmountEntry,
@@ -20,13 +20,12 @@ module Abaks.Entities
   )
 where
 
-import Abaks.EventSourcing
+import Abaks.Utils.EventSourcing
 import Control.Monad (unless)
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
-import GHC.Exts (IsString)
 import GHC.Generics (Generic)
 
 -- * Base types
@@ -71,10 +70,11 @@ data AbaksEvent
 
 -- * CommandHandler
 
-startPeriod :: PeriodId -> Text -> Day -> Day -> Amount -> CommandHandler AbaksEvent ExplainedError
+startPeriod :: PeriodId -> Text -> Day -> Day -> Amount -> CommandHandler AbaksEvent SemanticError
 startPeriod periodId name from to balance events = do
   unless (null events) $
-    Left "Period already started"
+    Left $
+      PreconditionError "Period already started"
   return
     [ Started
         { periodId = periodId,
@@ -85,60 +85,65 @@ startPeriod periodId name from to balance events = do
         }
     ]
 
-addEntry :: Entry -> CommandHandler AbaksEvent ExplainedError
+addEntry :: Entry -> CommandHandler AbaksEvent SemanticError
 addEntry entry events = do
   hasStarted events
   inPeriod entry.date events
   let entries = listEntries events
   unless (Map.notMember entry.entryId entries) $
-    Left "Entry already existing"
+    Left $
+      PreconditionError "Entry already existing"
   return [EntryAdded entry]
 
-changeAmountEntry :: EntryId -> Amount -> CommandHandler AbaksEvent ExplainedError
+changeAmountEntry :: EntryId -> Amount -> CommandHandler AbaksEvent SemanticError
 changeAmountEntry entryId amount events = do
   validEntry entryId events
   return [EntryAmountChanged entryId amount]
 
-validateEntry :: EntryId -> CommandHandler AbaksEvent ExplainedError
+validateEntry :: EntryId -> CommandHandler AbaksEvent SemanticError
 validateEntry entryId events = do
   validEntry entryId events
   return [EntryValidated entryId]
 
-commentEntry :: EntryId -> Text -> CommandHandler AbaksEvent ExplainedError
+commentEntry :: EntryId -> Text -> CommandHandler AbaksEvent SemanticError
 commentEntry entryId comment events = do
   validEntry entryId events
   return [EntryCommented entryId comment]
 
-markInConflictEntry :: EntryId -> Text -> CommandHandler AbaksEvent ExplainedError
+markInConflictEntry :: EntryId -> Text -> CommandHandler AbaksEvent SemanticError
 markInConflictEntry entryId reason events = do
   validEntry entryId events
   return [EntryMarkedInConflict entryId reason]
 
-deleteEntry :: EntryId -> Text -> CommandHandler AbaksEvent ExplainedError
+deleteEntry :: EntryId -> Text -> CommandHandler AbaksEvent SemanticError
 deleteEntry entryId comment events = do
   validEntry entryId events
   return [EntryDeleted entryId comment]
 
 -- * Various command handler utils
 
-newtype ExplainedError = ExplainedError {getExplainedError :: Text}
+data SemanticError
+  = MissingError Text
+  | DisappearedError Text
+  | InvalidError Text
+  | BrokenInvariantError Text
+  | PreconditionError Text
   deriving stock (Eq, Ord, Show, Generic)
-  deriving newtype (IsString)
 
-hasStarted :: Events AbaksEvent -> Either ExplainedError ()
+hasStarted :: Events AbaksEvent -> Either SemanticError ()
 hasStarted =
   \case
     (Started {} : _) -> return ()
-    _ -> Left "Period is not properly defined"
+    _ -> Left $ PreconditionError "Period is not properly defined"
 
-inPeriod :: Day -> Events AbaksEvent -> Either ExplainedError ()
+inPeriod :: Day -> Events AbaksEvent -> Either SemanticError ()
 inPeriod x =
   \case
     (Started {..} : _) ->
       if x >= from && x <= to
         then return ()
-        else Left "Out of period"
-    _ -> Left "Period is not properly defined"
+        else Left $ InvalidError "Out of period"
+    _ -> Left $ BrokenInvariantError "Period is not properly defined"
 
 listEntries :: Events AbaksEvent -> Map.Map EntryId (Either () Entry)
 listEntries = foldl' go mempty
@@ -154,10 +159,10 @@ listEntries = foldl' go mempty
         EntryMarkedInConflict {} -> entries
         EntryDeleted {..} -> Map.insert entryId (Left ()) entries
 
-validEntry :: EntryId -> Events AbaksEvent -> Either ExplainedError ()
+validEntry :: EntryId -> Events AbaksEvent -> Either SemanticError ()
 validEntry entryId events = do
   let entries = listEntries events
   case Map.lookup entryId entries of
-    Nothing -> Left "Unknown entry"
-    Just (Left ()) -> Left "Deleted entry"
+    Nothing -> Left $ MissingError "Unknown entry"
+    Just (Left ()) -> Left $ DisappearedError "Deleted entry"
     Just (Right _) -> Right ()

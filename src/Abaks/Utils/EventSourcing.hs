@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Abaks.EventSourcing
+module Abaks.Utils.EventSourcing
   ( AggregateId (..),
     Events,
     CommandHandler,
