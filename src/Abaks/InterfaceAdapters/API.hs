@@ -1,6 +1,7 @@
 module Abaks.InterfaceAdapters.API
   ( API,
     server,
+    ApiEffects,
   )
 where
 

@@ -22,6 +22,7 @@ where
 
 import Abaks.Utils.EventSourcing
 import Control.Monad (unless)
+import Data.Aeson
 import Data.List (foldl')
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
@@ -32,6 +33,7 @@ import GHC.Generics (Generic)
 
 newtype PeriodId = PeriodId {getPeriodId :: AggregateId}
   deriving stock (Eq, Ord, Show, Generic)
+  deriving newtype (FromJSON, ToJSON)
 
 data Entry = Entry
   { entryId :: EntryId,
@@ -42,12 +44,15 @@ data Entry = Entry
     date :: Day
   }
   deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 newtype EntryId = EntryId {getEntryId :: Int}
   deriving stock (Eq, Ord, Show, Generic)
+  deriving newtype (FromJSON, ToJSON)
 
 newtype Amount = Amount {getAmountInCents :: Int}
   deriving stock (Eq, Ord, Show, Generic)
+  deriving newtype (FromJSON, ToJSON)
 
 data EntryState
   = Expected
@@ -55,6 +60,7 @@ data EntryState
   | Validated
   | InConflict Text
   deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- * Events
 
@@ -67,6 +73,7 @@ data AbaksEvent
   | EntryMarkedInConflict {entryId :: EntryId, reason :: Text}
   | EntryDeleted {entryId :: EntryId, comment :: Text}
   deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- * CommandHandler
 
