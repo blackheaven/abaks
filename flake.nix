@@ -19,22 +19,11 @@
             haskellPackages.callCabal2nix "abaks" ./. { };
 
           devShells.default =
-            let
-              scripts = pkgs.symlinkJoin {
-                name = "scripts";
-                paths = pkgs.lib.mapAttrsToList pkgs.writeShellScriptBin {
-                  ormolu-ide = ''
-                    ${pkgs.ormolu}/bin/ormolu -o -XNoImportQualifiedPost -o -XOverloadedRecordDot $@
-                  '';
-                };
-              };
-            in
             pkgs.mkShell {
               buildInputs = with haskellPackages; [
                 haskell-language-server
                 ghcid
                 cabal-install
-                scripts
                 ormolu
               ];
               inputsFrom = [
