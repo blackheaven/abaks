@@ -23,7 +23,6 @@ where
 import Abaks.Utils.EventSourcing
 import Control.Monad (unless)
 import Data.Aeson
-import Data.List (foldl')
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import Data.Time.Calendar (Day)

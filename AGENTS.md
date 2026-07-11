@@ -5,8 +5,8 @@ periods and reconcile against expected vs. actual balances.
 
 ## Tech Stack
 
-- **Language:** Haskell (GHC 9.2.5 via Nix flake)
-- **Build:** Cabal 3.0 (Bazel configured, nix toolchain)
+- **Language:** Haskell (GHC: nixpkgs default via Nix flake)
+- **Build:** Cabal via Nix flake
 - **Effect system:** Polysemy (+ polysemy-plugin)
 - **Web API:** Servant (server, client, openapi3)
 - **Serialization:** Aeson
